@@ -1,5 +1,5 @@
 {
-  "name": "motivo/gptfaker",
+  "name": "dejury/gptfaker",
   "description": "An package that integrates with FakerPHP and generates AI based texts",
   "type": "library",
   "license": "MIT",
