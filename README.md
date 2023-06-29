@@ -4,7 +4,7 @@ This package adds the possibility to use GPT to generate fake text. It completel
 ## Installation
 Install the package using composer:
 ```bash
-composer require dejury/gptfaker
+composer require dejury/gptfaker --dev
 ```
 
 Add this to your `.env` file:
