@@ -4,6 +4,7 @@ namespace Motivo\GptFaker\Providers;
 
 use Faker\Generator;
 use Tectalic\OpenAi\Client;
+use Illuminate\Support\Str;
 use Tectalic\OpenAi\Manager;
 use Http\Discovery\Psr18Client;
 use Tectalic\OpenAi\Authentication;
@@ -22,20 +23,28 @@ class GptFaker extends \Faker\Provider\Base
         $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
     }
 
-    public function gpt(string $prompt): string
+    public function gpt(string|array $prompt, bool $returnArray = false)
     {
-        $request = new CreateRequest([
-            'model'    => 'gpt-3.5-turbo',
-            'messages' => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
+        if (!is_array($prompt)) {
+            $prompt = [$prompt];
+        }
+
+        $request = new \Tectalic\OpenAi\Models\Completions\CreateRequest([
+            'model'       => 'text-davinci-003',
+            'prompt'      => $prompt,
+            'max_tokens'  => 256,
+            'temperature' => 0.7,
         ]);
 
-        /** @var \Tectalic\OpenAi\Models\ChatCompletions\CreateResponse $response */
-        $response = $this->client->chatCompletions()->create($request)->toModel();
 
-        return $response->choices[0]->message->content;
+        /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */
+        $response = $this->client->completions()->create($request)->toModel();
 
 
+        if ($returnArray) {
+            return $response->choices;
+        } else {
+            return (string)Str::of($response->choices[0]->text)->trim();
+        }
     }
 }
