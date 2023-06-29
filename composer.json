@@ -1,0 +1,26 @@
+{
+    "name": "motivo/gptfaker",
+    "description": "An package that integrates with FakerPHP and generates AI based texts",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Motivo\\Gptfaker\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Jonathan Hafkamp",
+            "email": "jonathan@motivo.nl"
+        }
+    ],
+    "require": {
+        "fakerphp/faker": "^1.23",
+        "tectalic/openai": "^1.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
