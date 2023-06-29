@@ -7,6 +7,11 @@ Install the package using composer:
 composer require dejury/gptfaker
 ```
 
+Add this to your `.env` file:
+```php
+OPENAI_API_KEY=<your-api-key>
+```
+
 ## Usage
 Use it in your Laravel Factory:
 ```php
