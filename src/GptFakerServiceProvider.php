@@ -14,10 +14,27 @@ class GptFakerServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->mergeConfigFrom(
+            __DIR__ . '/config/fakergpt.php',
+            'fakergpt',
+        );
+
         $this->app->singleton(Generator::class, function ($app) {
-            $faker = Factory::create($app['config']->get('app.faker_locale', 'en_US'));
-            $faker->addProvider(new GptFaker($faker));
+            $locale = $app['config']->get('app.faker_locale', 'en_US');
+
+            $faker = Factory::create($locale);
+            $faker->addProvider(new GptFaker($faker, $locale));
             return $faker;
         });
+    }
+
+    /**
+     * Bootstrap any package services.
+     */
+    public function boot(): void
+    {
+        $this->publishes([
+            __DIR__ . '/config/fakergpt.php' => config_path('fakergpt.php'),
+        ]);
     }
 }
