@@ -1,19 +1,33 @@
 # GPTFaker
+
 This package adds the possibility to use GPT to generate fake text. It completely integrates with Laravel and their factories.
 
 ## Installation
+
 Install the package using composer:
+
 ```bash
 composer require dejury/gptfaker --dev
 ```
 
 Add this to your `.env` file:
+
 ```php
-OPENAI_API_KEY=<your-api-key>
+FAKERGPT_OPENAI_API_KEY=<your-api-key>
+```
+
+## Config
+
+The config file can be published with the following command:
+
+```
+php artisan vendor:publish --provider="Motivo\GptFaker\GptFakerServiceProvider"
 ```
 
 ## Usage
+
 Use it in your Laravel Factory:
+
 ```php
 <?php
 
@@ -51,10 +65,25 @@ class PageFactory extends Factory
     }
 }
 ```
-### Multilanguage
-Just type the prompt in the language you desire
+
+### Fallback
+
+A fallback can be supplied in case ChatGPT is unable to create a response, the api key is not set or if FakerGPT should not be executed for the given environment.
+By default this value is set to `null` so it is highly recommended to provide a valid fallback.
+
+```php
+$this->faker->gpt(
+    'Create a short paragraph for the page', 
+    $this->faker->paragraph
+),
+```
+
+### Multi-language
+
+Prompts are accepted in every language ChatGPT understands. The results will be translated to your configured faker locale.
 
 ### Multiple prompts
+
 It is possible to give an array with prompts:
 
 ```php
@@ -69,7 +98,12 @@ $choices = $this->faker->unique()->gpt(
 );
 
 return [
-'overview_pretitle' => Str::of($choices[0]?->text)->trim(),
+    'overview_pretitle' => Str::of($choices[0]?->text)->trim(),
 ];
 
 ```
+
+### Environments
+
+You can configure for which environments FakerGPT should be executed. By default this is only for `local` environment.
+This can be changed by publishing the config file as described above and overwriting the `environment` config.

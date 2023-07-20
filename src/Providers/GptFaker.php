@@ -2,49 +2,91 @@
 
 namespace Motivo\GptFaker\Providers;
 
+use Exception;
 use Faker\Generator;
+use Illuminate\Support\Facades\Log;
 use Tectalic\OpenAi\Client;
 use Illuminate\Support\Str;
 use Tectalic\OpenAi\Manager;
 use Http\Discovery\Psr18Client;
 use Tectalic\OpenAi\Authentication;
-use Tectalic\OpenAi\Models\ChatCompletions\CreateRequest;
 
 class GptFaker extends \Faker\Provider\Base
 {
-    protected Client $client;
+    protected ?Client $client = null;
 
-    public function __construct(Generator $generator)
+    private string $locale;
+
+    public function __construct(Generator $generator, string $locale)
     {
-        parent::__construct($generator);
+        $apiKey = config('fakergpt.openai_api_key');
 
-        $auth = new Authentication(getenv('OPENAI_API_KEY'));
-        $httpClient = new Psr18Client();
-        $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
+        if ($apiKey) {
+            parent::__construct($generator);
+
+            $auth = new Authentication($apiKey);
+            $httpClient = new Psr18Client();
+            $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
+
+            $this->locale = $locale;
+        }
     }
 
-    public function gpt(string|array $prompt, bool $returnArray = false)
+    public function gpt(string|array $prompt, mixed $fallback = null, bool $returnArray = false)
     {
-        if (!is_array($prompt)) {
-            $prompt = [$prompt];
+        // If FakerGPT is not meant to be executed in this environment
+        // or if api key is missing return the fallback
+        if (! $this->client || ! $this->runInEnvironment()) {
+            if (is_callable($fallback)) {
+                return $fallback();
+            }
+
+            return $fallback;
         }
 
-        $request = new \Tectalic\OpenAi\Models\Completions\CreateRequest([
-            'model'       => 'text-davinci-003',
-            'prompt'      => $prompt,
-            'max_tokens'  => 256,
-            'temperature' => 0.7,
-        ]);
+        try {
+            // Make sure the prompt is an array
+            if (!is_array($prompt)) {
+                $prompt = [$prompt];
+            }
 
+            // Tell ChatGPT to respond in another language
+            foreach ($prompt as $index => $line) {
+                $prompt[$index] = $line . " in language {$this->locale}";
+            }
 
-        /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */
-        $response = $this->client->completions()->create($request)->toModel();
+            // Build request
+            $request = new \Tectalic\OpenAi\Models\Completions\CreateRequest([
+                'model'       => config('fakergpt.model'),
+                'max_tokens'  => config('fakergpt.max_tokens'),
+                'temperature' => config('fakergpt.temperature'),
+                'prompt'      => $prompt,
+            ]);
 
+            /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */
+            $response = $this->client->completions()->create($request)->toModel();
 
-        if ($returnArray) {
-            return $response->choices;
-        } else {
-            return (string)Str::of($response->choices[0]->text)->trim();
+            // Return the response
+            if ($returnArray) {
+                return $response->choices;
+            } else {
+                return (string)Str::of($response->choices[0]->text)->trim();
+            }
+        } catch (Exception $exception) {
+            Log::warning('FakerGTP call failed, returning fallback', [
+                'code' => $exception->getCode(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTrace(),
+            ]);
+
+            return $fallback;
         }
+    }
+
+    protected function runInEnvironment(): bool
+    {
+        return in_array(config('app.env'), config('fakergpt.environments', []));
     }
 }
