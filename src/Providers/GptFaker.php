@@ -2,13 +2,14 @@
 
 namespace Motivo\GptFaker\Providers;
 
+use Exception;
 use Faker\Generator;
+use Illuminate\Support\Facades\Log;
 use Tectalic\OpenAi\Client;
 use Illuminate\Support\Str;
 use Tectalic\OpenAi\Manager;
 use Http\Discovery\Psr18Client;
 use Tectalic\OpenAi\Authentication;
-use Tectalic\OpenAi\Models\ChatCompletions\CreateRequest;
 
 class GptFaker extends \Faker\Provider\Base
 {
@@ -43,32 +44,44 @@ class GptFaker extends \Faker\Provider\Base
             return $fallback;
         }
 
-        // Make sure the prompt is an array
-        if (!is_array($prompt)) {
-            $prompt = [$prompt];
-        }
+        try {
+            // Make sure the prompt is an array
+            if (!is_array($prompt)) {
+                $prompt = [$prompt];
+            }
 
-        // Tell ChatGPT to respond in another language
-        foreach ($prompt as $index => $line) {
-            $prompt[$index] = $line . " in language {$this->locale}";
-        }
+            // Tell ChatGPT to respond in another language
+            foreach ($prompt as $index => $line) {
+                $prompt[$index] = $line . " in language {$this->locale}";
+            }
 
-        // Build request
-        $request = new \Tectalic\OpenAi\Models\Completions\CreateRequest([
-            'model'       => config('fakergpt.model'),
-            'max_tokens'  => config('fakergpt.max_tokens'),
-            'temperature' => config('fakergpt.temperature'),
-            'prompt'      => $prompt,
-        ]);
+            // Build request
+            $request = new \Tectalic\OpenAi\Models\Completions\CreateRequest([
+                'model'       => config('fakergpt.model'),
+                'max_tokens'  => config('fakergpt.max_tokens'),
+                'temperature' => config('fakergpt.temperature'),
+                'prompt'      => $prompt,
+            ]);
 
-        /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */
-        $response = $this->client->completions()->create($request)->toModel();
+            /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */
+            $response = $this->client->completions()->create($request)->toModel();
 
-        // Return the response
-        if ($returnArray) {
-            return $response->choices;
-        } else {
-            return (string)Str::of($response->choices[0]->text)->trim();
+            // Return the response
+            if ($returnArray) {
+                return $response->choices;
+            } else {
+                return (string)Str::of($response->choices[0]->text)->trim();
+            }
+        } catch (Exception $exception) {
+            Log::warning('FakerGTP call failed, returning fallback', [
+                'code' => $exception->getCode(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTrace(),
+            ]);
+
+            return $fallback;
         }
     }
 
