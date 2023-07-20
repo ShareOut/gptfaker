@@ -11,7 +11,9 @@ return [
 
     'temperature' => env('FAKERGPT_TEMPERATURE', 0.7),
 
+    'performance_mode' => env('FAKERGPT_PERFORMANCE_MODE', false),
+
     'environments' => [
         'local',
-    ]
+    ],
 ];

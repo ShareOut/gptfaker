@@ -107,3 +107,27 @@ return [
 
 You can configure for which environments FakerGPT should be executed. By default this is only for `local` environment.
 This can be changed by publishing the config file as described above and overwriting the `environment` config.
+
+### Trimming quotes
+
+ChatGPT has a tendency to start end and sentences with quotes, especially when requesting titles, this is often undesirable. 
+These quotes can be trimmed as follows:
+
+```php
+$this->faker->unique()->gpt(
+    prompt: "Maak een functietitel binnen de zorg aan",
+    trimQuotes: true
+);
+```
+
+### Performance mode
+
+Performance mode can be enabled to drastically improve the speed of your factories/seeders. 
+This executes the same prompt several times at once instead of making multiple requests and caches the results. Each result will only be used once. When the cache runs empty a new batch will be fetched.
+This is an opt-in feature, as it may expend tokens to cache results that might never be used, and as a result it becomes more expensive to use.
+
+This feature can be enabled by adding the following line to your `.env`
+
+```
+FAKERGPT_PERFORMANCE_MODE=true
+```
