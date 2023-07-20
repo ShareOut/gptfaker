@@ -12,25 +12,30 @@ use Tectalic\OpenAi\Models\ChatCompletions\CreateRequest;
 
 class GptFaker extends \Faker\Provider\Base
 {
-    protected Client $client;
+    protected ?Client $client = null;
 
     private string $locale;
 
     public function __construct(Generator $generator, string $locale)
     {
-        parent::__construct($generator);
+        $apiKey = config('fakergpt.openai_api_key');
 
-        $auth = new Authentication(config('fakergpt.openai_api_key'));
-        $httpClient = new Psr18Client();
-        $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
+        if ($apiKey) {
+            parent::__construct($generator);
 
-        $this->locale = $locale;
+            $auth = new Authentication($apiKey);
+            $httpClient = new Psr18Client();
+            $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
+
+            $this->locale = $locale;
+        }
     }
 
     public function gpt(string|array $prompt, mixed $fallback = null, bool $returnArray = false)
     {
-        // If FakerGPT is not meant to be executed in this environment return the fallback
-        if (! $this->runInEnvironment()) {
+        // If FakerGPT is not meant to be executed in this environment
+        // or if api key is missing return the fallback
+        if (! $this->client || ! $this->runInEnvironment()) {
             if (is_callable($fallback)) {
                 return $fallback();
             }
