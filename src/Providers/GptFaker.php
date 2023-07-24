@@ -36,6 +36,11 @@ class GptFaker extends \Faker\Provider\Base
 
             $this->locale = $locale;
         }
+
+        if (config('fakergpt.persistent_cache', false) && file_exists(base_path('.fakergpt_cache.php'))) {
+            static::$cachedPrompts = include(base_path('.fakergpt_cache.php'));
+
+        }
     }
 
     public function gpt(string|array $prompt, mixed $fallback = null, bool $returnArray = false, bool $trimQuotes = false)
@@ -120,11 +125,23 @@ class GptFaker extends \Faker\Provider\Base
             // Store the cached values
             static::$cachedPrompts[$prompt] = $values;
 
+
             // Now cached values exists, get the cached response
-            return $this->getCachedResponse($prompt);
+            $response =  $this->getCachedResponse($prompt);
+
+            // Attempts to add response to persistent cached responses
+            $this->addPersistentCache($prompt, $response);
+
+            // Return the response as a string
+            return $response;
         } else {
+            $response = $this->trimText($response->choices[0]->text, $trimQuotes);
+
+            // Attempts to add response to persistent cached responses
+            $this->addPersistentCache($prompt, $response);
+
             // Return the response as string
-            return $this->trimText($response->choices[0]->text, $trimQuotes);
+            return $response;
         }
     }
 
@@ -141,6 +158,31 @@ class GptFaker extends \Faker\Provider\Base
         }
 
         return null;
+    }
+
+    protected function addPersistentCache(string $prompt, string $value): void
+    {
+        if (! config('fakergpt.persistent_cache', false)) {
+            return;
+        }
+
+        $cache = [];
+
+        if (file_exists(base_path('.fakergpt_cache.php'))) {
+            $cache = include(base_path('.fakergpt_cache.php'));
+        }
+
+        if (! array_key_exists($prompt, $cache)) {
+            $cache[$prompt] = [];
+        }
+
+        if (! in_array($value, $cache[$prompt])) {
+            $cache[$prompt][] = $value;
+
+            $output = '<?php return ' . var_export($cache, true) . ';' . PHP_EOL;
+
+            file_put_contents(base_path('.fakergpt_cache.php'), $output);
+        }
     }
 
     protected function runInEnvironment(): bool

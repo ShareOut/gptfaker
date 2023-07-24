@@ -131,3 +131,16 @@ This feature can be enabled by adding the following line to your `.env`
 ```
 FAKERGPT_PERFORMANCE_MODE=true
 ```
+
+### Persistent Cache
+
+Often it is enough to generate fake data once rather than for every time the seeders are being executed, both for monetary and execution speed reasons.
+For these situations persistent cache can be enabled. This will cache the prompts and their results in `.fakergpt_cache.php`.
+
+```
+FAKERGPT_PERSISTENT_CACHE=true
+```
+
+Persistent cache will have the side effect (and potential benefit) that generated content is predictable.
+
+Unlike most cache files it's highly recommended to commit the `.fakergpt_cache.php` when this feature is enabled.
