@@ -13,6 +13,8 @@ return [
 
     'performance_mode' => env('FAKERGPT_PERFORMANCE_MODE', false),
 
+    'persistent_cache' => env('FAKERGPT_PERSISTENT_CACHE', false),
+
     'environments' => [
         'local',
     ],
