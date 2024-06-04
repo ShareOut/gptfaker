@@ -2,6 +2,18 @@
 
 This package adds the possibility to use GPT to generate fake text. It completely integrates with Laravel and their factories.
 
+# About this fork
+
+Sorry for this bad code, I don't have the time at the moment. What this fork do:
+- set the completion api url to `http://localhost:1234/v1` for using with my LM Studio local installation
+- a fast written prompt in french (made for Mistral) that force the LLM to respond in json with the requested fake elements.
+
+Exemple:
+`Find a title and description for a training in the medical field. Returns only a single JSON object with the title and description keys.`
+
+- regex match the json pattern and decode to a php array returned by gpt() function
+- usage section updated bellow
+
 ## Installation
 
 Install the package using composer:
@@ -56,9 +68,11 @@ class PageFactory extends Factory
      */
     public function definition(): array
     {
+        $fakes = $this->faker->unique()->gpt('Crée un titre et un slug pour une page web de commerce en ligne. Renvoie uniquement un seul objet JSON avec les clefs title et slug.');
+        
         return [
-            'name'    => $this->faker->unique()->gpt('Create an title for the page'),
-            'slug'    => $this->faker->slug,
+            'name'    => $fakes['title'] ?? null,
+            'slug'    => $fakes['title'] ?? null,
             'content' => $this->faker->gpt('Create a short paragraph for the page'),
             'visible' => true,
         ];

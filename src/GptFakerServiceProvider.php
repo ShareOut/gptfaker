@@ -19,6 +19,10 @@ class GptFakerServiceProvider extends ServiceProvider
             'fakergpt',
         );
 
+        if (function_exists('fake') && class_exists(\Faker\Factory::class)) {
+            fake()->addProvider(new GptFaker(fake(), $this->app->getLocale()));
+        }
+
         $this->app->singleton(Generator::class, function ($app) {
             $locale = $app['config']->get('app.faker_locale', 'en_US');
 

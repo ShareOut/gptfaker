@@ -32,7 +32,7 @@ class GptFaker extends \Faker\Provider\Base
 
             $auth = new Authentication($apiKey);
             $httpClient = new Psr18Client();
-            $this->client = new Client($httpClient, $auth, Manager::BASE_URI);
+            $this->client = new Client($httpClient, $auth, "http://localhost:1234/v1");
 
             $this->locale = $locale;
         }
@@ -78,6 +78,12 @@ class GptFaker extends \Faker\Provider\Base
         }
 
         if (! $returnArray) {
+
+            $matches = [];
+            if(preg_match('/\{[^}]+\}/i', $response[0], $matches)) {
+                $response[0] = json_decode($matches[0], true);
+            }
+
             return $response[0];
         }
 
@@ -92,9 +98,13 @@ class GptFaker extends \Faker\Provider\Base
         }
 
         // Tell ChatGPT to respond in another language
-        $localizedPrompt = $prompt . " in language {$this->locale}";
+//        $localizedPrompt = $prompt . " in language {$this->locale}";
+        $localizedPrompt = $prompt;
 
-        $gptPrompts = [$localizedPrompt];
+        $gptPrompts = ["<s>####\n# Objectifs \nTu es un générateur de données fictives, réponds à la demande uniquement en JSON avec les clés demandées.####\n\n####\n# Exemple:\n\n## Demande:\nTrouve un titre et une description pour une formation dans le domaine médical. Renvoie uniquement un objet JSON avec les clefs titre et description.\n\n## Réponse: \n{
+  \n\"title\": \"Certificat de formation en réanimation\",
+  \n\"description\": \"Apprenez à gérer les patients en réanimation, appréhendez les techniques de ventilation artificielle, les traitements des émésions sanguines et les étapes du processus d'extracorporel\"
+\n}\n####\n\n<<<\n# Demande :\n".$localizedPrompt."\n\n## Réponse :\n>>>"];
 
         // If performance mode is enabled repeat the same prompts 10 times
         if (config('fakergpt.performance_mode')) {
