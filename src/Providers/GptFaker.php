@@ -119,6 +119,7 @@ class GptFaker extends \Faker\Provider\Base
             'max_tokens'  => (int) config('fakergpt.max_tokens'),
             'temperature' => (float) config('fakergpt.temperature'),
             'prompt'      => $gptPrompts,
+            'response_format' => ["type" => "json_object"],
         ]);
 
         /** @var \Tectalic\OpenAi\Models\Completions\CreateResponse $response */

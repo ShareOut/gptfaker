@@ -1,5 +1,5 @@
 {
-  "name": "dejury/gptfaker",
+  "name": "shareout/gptfaker",
   "description": "An package that integrates with FakerPHP and generates AI based texts",
   "type": "library",
   "license": "MIT",
@@ -12,6 +12,10 @@
     {
       "name": "Jonathan Hafkamp",
       "email": "jonathan@motivo.nl"
+    },
+    {
+      "name": "Nicolas Karlen",
+      "email": "nicolas.karlen@gmail.com"
     }
   ],
   "require": {
